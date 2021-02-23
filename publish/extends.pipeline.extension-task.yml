@@ -48,7 +48,7 @@ stages:
 
   - stage: PublishDev
     displayName: 'Publish privately to ${{ variables.publisherId }}/${{ variables.testOrganization }}'
-    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    condition: and(succeeded(), and( ne(variables['Build.Reason'], 'PullRequest'), ne(variables['Build.SourceBranch'], 'refs/heads/main')))
     dependsOn: BuildExtension
     jobs:
       - deployment: 'Deploy_${{ variables.extensionIdForDeploy }}_${{ variables.extensionVersionForDeploy }}'
