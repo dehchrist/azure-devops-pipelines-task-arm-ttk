@@ -1,0 +1,83 @@
+parameters:
+    - name: ServiceConnection
+      type: string
+    - name: TestOrganization
+      displayName: 'Azure DevOps Organization that will host Extension preview'
+      type: string
+    - name: PublisherId
+      type: string
+    - name: ExtensionId
+      type: string
+    - name: ExtensionVisibility
+      type: string
+      default: private
+      values:
+        - private
+        - privatepreview
+        - public
+    - name: VsixArtifactFolder
+      type: string
+      default: vsix
+      values:
+        - vsix
+    - name: PublishedArtifactFolder
+      type: string
+      default: dev
+      values:
+        - dev
+        - prod
+
+steps:        
+
+  - task: TfxInstaller@3
+    displayName: 'Acquire Cross Platform CLI for Azure DevOps'
+    inputs:
+      version: '0.8.x'
+      checkLatest: true
+
+  - task: PublishAzureDevOpsExtension@3
+    name: publishExtension
+    displayName: 'Publish in ${{ parameters.ExtensionVisibility }}'
+    inputs:
+      connectTo: VsTeam
+      connectedServiceName: ${{ parameters.ServiceConnection }}
+      fileType: 'vsix'
+      vsixFile: '$(Pipeline.Workspace)/${{ parameters.VsixArtifactFolder }}/${{ parameters.ExtensionId }}.vsix'
+      publisherId: ${{ parameters.PublisherId }}
+      extensionId: ${{ parameters.ExtensionId }}
+      extensionTag: '-dev'
+      updateTasksVersion: false
+      extensionVisibility: ${{ parameters.ExtensionVisibility }}
+      shareWith: ${{ parameters.TestOrganization }}
+      noWaitValidation: true
+
+  - task: IsAzureDevOpsExtensionValid@3
+    displayName: 'Validate Extension'
+    inputs:
+      connectTo: VsTeam
+      connectedServiceName: ${{ parameters.ServiceConnection }}
+      method: 'vsix'
+      vsixFile: '$(publishExtension.Extension.OutputPath)'
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish ${{ parameters.PublishedArtifactFolder }} vsix'
+    condition: succeeded()
+    inputs:
+      publishLocation: pipeline
+      targetPath: '$(publishExtension.Extension.OutputPath)'
+      artifact: ${{ parameters.PublishedArtifactFolder }}
+
+        #   - task: GitHubRelease@1
+        #     inputs:
+        #       gitHubConnection: 'GitHub - jessehouwing'
+        #       repositoryName: '$(Build.Repository.Name)'
+        #       action: 'create'
+        #       target: '$(Build.SourceVersion)'
+        #       tagSource: 'userSpecifiedTag'
+        #       tag: 'v$(Build.BuildNumber)'
+        #       title: 'v$(Build.BuildNumber)'
+        #       releaseNotesSource: 'inline'
+        #       assets: '$(publishProd.Extension.OutputPath)*'
+        #       changeLogCompareToRelease: 'lastFullRelease'
+        #       changeLogType: 'issueBased'
+        #       changeLogLabels: '[{ "state" : "closed" }]'

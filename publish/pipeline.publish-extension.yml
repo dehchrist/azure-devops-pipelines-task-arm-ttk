@@ -1,0 +1,44 @@
+name: 'publish-extension-${{ parameters.ExtensionInfo.Id }}-${{ parameters.ExtensionInfo.Version }}.$(Build.BuildId)'
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - '*'
+  paths:
+    include:
+    - BuildTasks
+
+pool:
+  vmImage: ubuntu-latest
+  demands: npm
+
+parameters:
+    - name: VsMktServiceConnection
+      displayName: 'Visual Studio Marketplace service connection name'
+      type: string      
+      default: dechrist-o
+    - name: PublisherId
+      displayName: 'Visual Studio Marketplace unique publisher identifier'
+      type: string
+      default: dechrist
+    - name: TestOrganization
+      displayName: 'Azure DevOps Organization where the dev Extension will be shared'
+      default: christian
+    - name: ExtensionInfo
+      displayName: 'Extension info'
+      # Name & Version are set via pipeline overriding the name & version in 'vss-extension.json'
+      type: object
+      default:
+        Name: 'ARM Template Toolkit Tasks'
+        Id: 'arm-ttk-tasks'
+        Visibility: 'private'
+        Version: '0.1.1'
+  
+extends:
+  template: /publish/extends.pipeline.extension-task.yml
+  parameters:
+    VsMktServiceConnection: ${{ parameters.VsMktServiceConnection }}
+    PublisherId: ${{ parameters.PublisherId }}
+    TestOrganization: ${{ parameters.TestOrganization }}
+    ExtensionInfo: ${{ parameters.ExtensionInfo }}

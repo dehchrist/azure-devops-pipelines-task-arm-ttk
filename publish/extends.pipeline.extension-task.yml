@@ -1,0 +1,85 @@
+# Public pipelines used as reference:
+# 1. Official documentation on publishing extensions (bad example !)
+# 2. https://github.com/microsoft/azure-devops-extension-tasks/blob/main/azure-pipelines.yml
+
+parameters:
+  - name: VsMktServiceConnection
+    type: string
+  - name: PublisherId
+    type: string
+  - name: ExtensionInfo
+    type: object
+    # expected properties: Name, Id, Visibility, Version
+  - name: TestOrganization
+    type: string
+
+variables:
+  - name: publisherId
+    value: ${{ parameters.PublisherId }}
+  - name: extensionName
+    value: ${{ parameters.ExtensionInfo.Name }}
+  - name: extensionId
+    value: ${{ parameters.ExtensionInfo.Id }}
+  - name: extensionVisibility
+    value: ${{ parameters.ExtensionInfo.Visibility }}
+  - name: extensionVersion
+    value: ${{ parameters.ExtensionInfo.Version }}
+  - name: extensionIdForDeploy
+    value: '${{ replace(variables.extensionId, ''-'', ''_'') }}'    
+  - name: extensionVersionForDeploy
+    value: '${{ replace(variables.extensionVersion, ''.'', ''_'') }}'    
+  - name: testOrganization
+    value: ${{ parameters.TestOrganization }}
+  - name: serviceConnection
+    value: ${{ parameters.VsMktServiceConnection }}
+
+stages:
+  - stage: BuildExtension
+    displayName: 'Build "${{ variables.extensionName }}" Extension'
+    jobs:
+      - template: /publish/template.job.build-extension.yml
+        parameters:
+          PublisherId: ${{ variables.publisherId }}
+          ExtensionId: ${{ variables.extensionId }}
+          ExtensionName: ${{ variables.extensionName }}
+          ExtensionVisibility: ${{ variables.extensionVisibility }}
+          ExtensionVersion: ${{ variables.extensionVersion }}
+          UpdateTasksVersionType: patch
+
+  - stage: PublishDev
+    displayName: 'Publish privately to ${{ variables.publisherId }}/${{ variables.testOrganization }}'
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    dependsOn: BuildExtension
+    jobs:
+      - deployment: 'Deploy_${{ variables.extensionIdForDeploy }}_${{ variables.extensionVersionForDeploy }}'
+        environment: 'Publisher ${{ variables.publisherId }} (private)'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: /publish/template.steps.publish-extension.yml
+                  parameters:
+                    ServiceConnection: ${{ variables.serviceConnection }}
+                    PublisherId: ${{ variables.publisherId }}
+                    ExtensionId: ${{ variables.extensionId }}
+                    TestOrganization: ${{ variables.testOrganization }}
+                    ExtensionVisibility: privatepreview
+
+  - stage: PublishProd
+    displayName: 'Publish publicly to ${{ variables.publisherId }}'
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    dependsOn: PublishDev
+    jobs:
+      - deployment: 'Deploy_${{ variables.extensionIdForDeploy }}_${{ variables.extensionVersionForDeploy }}'
+        environment: 'Publisher ${{ variables.publisherId }} (public)'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: /publish/template.steps.publish-extension.yml
+                  parameters:
+                    ServiceConnection: ${{ variables.serviceConnection }}
+                    PublisherId: ${{ variables.publisherId }}
+                    ExtensionId: ${{ variables.extensionId }}
+                    TestOrganization: ${{ variables.testOrganization }}
+                    ExtensionVisibility: public

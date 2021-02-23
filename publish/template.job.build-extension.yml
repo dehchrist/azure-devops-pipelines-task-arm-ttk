@@ -1,0 +1,89 @@
+parameters:
+  - name: PublisherId
+    type: string
+  - name: ExtensionId
+    type: string
+  - name: ExtensionName
+    type: string
+  - name: ExtensionVisibility
+    type: string
+    default: private
+    values:
+      - private
+      - public
+  - name: ExtensionVersion
+    type: string
+  - name: UpdateTasksVersionType
+    type: string
+    default: patch
+    values:
+      - major
+      - minor
+      - patch
+
+jobs:
+  - job:
+    displayName: Build Extension
+
+    variables:
+      - name: extensionId
+        value: ${{ parameters.ExtensionId }}
+      - name: publisherId
+        value: ${{ parameters.PublisherId }}
+      - name: extensionName
+        value: ${{ parameters.ExtensionName }}
+      - name: extensionVersion
+        value: '${{ parameters.ExtensionVersion }}.$(Build.BuildId)'
+      - name: extensionVisibility
+        value: ${{ parameters.ExtensionVisibility }}
+      - name: updateTasksVersionType
+        value: ${{ parameters.UpdateTasksVersionType }}
+      - name: ArtifactFolder
+        value: vsix
+
+    steps:
+      - task: NodeTool@0
+        displayName: Install Node.js
+        inputs:
+          versionSpec: '10.x'
+
+      - bash: |
+          npm i -g glob-exec
+          npm run initdev
+        displayName: Install Node dependencies
+
+      - task: Npm@1
+        displayName: Build the extension
+        inputs:
+          command: custom
+          verbose: false
+          customCommand: run build
+
+      - task: TfxInstaller@3
+        displayName: Acquire Cross Platform CLI for Azure DevOps
+        inputs:
+          version: '0.8.x'
+          checkLatest: true
+
+      - task: PackageAzureDevOpsExtension@3
+        displayName: 'Package Extension: $(Build.SourcesDirectory)'
+        name: packageStep
+        inputs:
+          rootFolder: '$(Build.SourcesDirectory)'
+          outputPath: '$(Build.ArtifactStagingDirectory)/${{ variables.extensionId }}.vsix'
+          publisherId: ${{ variables.publisherId }}
+          extensionTag: -build
+          extensionId: ${{ variables.extensionId }}
+          extensionName: ${{ variables.extensionName }}
+          extensionVersion: '${{ variables.extensionVersion }}'
+          updateTasksVersion: true
+          updateTasksVersionType: ${{ variables.UpdateTasksVersionType }}
+          extensionVisibility: ${{ variables.ExtensionVisibility }}
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish vsix
+        condition: succeeded()
+        inputs:
+          targetPath: '$(packageStep.Extension.OutputPath)'
+          artifactName: ${{ variables.ArtifactFolder }}
+          artifactType: pipeline

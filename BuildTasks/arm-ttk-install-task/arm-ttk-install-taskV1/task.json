@@ -1,0 +1,32 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
+    "id": "dceb020e-b3f2-4235-a97e-5773de4e3063",
+    "name": "ArmTtkInstall",
+    "friendlyName": "Install ARM TTK",
+    "description": "Install Azure Resource Manager Template Toolkit",
+    "helpMarkDown": "Installs the Azure Resource Manager Template Toolkit",
+    "category": "Azure Pipelines",
+    "author": "Christian Dehaeseleer",
+    "version": {
+        "Major": 0,
+        "Minor": 1,
+        "Patch": 0
+    },
+    "instanceNameFormat": "Install ARM TTK",
+    "inputs": [
+        {
+            "type": "boolean",
+            "name": "clone",
+            "label": "Clone",
+            "defaultValue": "false",
+            "required": false,
+            "helpMarkDown": "Clone from the ARM TTK repo or download from https://aka.ms/arm-ttk-latest (default)."
+        }
+    ],
+    "minimumAgentVersion": "2.144.0",
+    "execution": {
+        "Node10": {
+            "target": "arm-ttk-install.js"
+        }
+    }
+}

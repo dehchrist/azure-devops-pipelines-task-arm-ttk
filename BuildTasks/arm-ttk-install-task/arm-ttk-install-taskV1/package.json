@@ -1,0 +1,14 @@
+{
+  "name": "azure-pipelines-task-arm-ttk",
+  "version": "1.0.0",
+  "description": "Azure DevOps pipeline task to install ARM TTK",
+  "repository": {
+    "type": "git",
+    "url": "https://christian.visualstudio.com/DefaultCollection/ARM-DevOps-Tools/_git/azure-pipelines-task-arm-ttk"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "azure-pipelines-task-lib": "^2.12.2",
+    "azure-pipelines-tool-lib": "^1.0.0-preview.0"
+  }
+}

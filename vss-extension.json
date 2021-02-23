@@ -1,0 +1,68 @@
+{
+    "manifestVersion": 1,
+    "id": "arm-ttk-tasks",
+    "version": "0.1.0",
+    "name": "ARM Template Toolkit Tasks",
+    "publisher": "dechrist",
+    "description": "Provides Azure DevOps tasks to install and run Microsoft ARM Template Toolkit CLI commands (cross-platform)",
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
+    "categories": [
+        "Azure Pipelines"
+    ],
+    "tags": [
+        "ARM",
+        "TTK",
+        "azure",
+        "deploy"
+    ],
+    "galleryFlags": [
+        "Free",
+        "Public"
+    ],
+    "icons": {
+        "default": "icon.png"
+    },
+    "content": {
+        "details": {
+            "path": "README.md"
+        },
+        "license": {
+            "path": "LICENSE"
+        }
+    },
+    "files": [
+        {
+            "path": "images",
+            "addressable": true
+        },
+        {
+            "path": "BuildTasks/arm-ttk-install-task",
+            "packagePath": "install"
+        }
+    ],
+    "links": {
+        "overview": {
+            "uri": "https://github.com/dechrist/azure-devops-pipelines-task-arm-ttk/blob/master/README.md"
+        }
+    },
+    "repository": {
+        "type": "git",
+        "uri": "https://github.com/dechrist/azure-devops-pipelines-task-arm-ttk"
+    },
+    "contributions": [
+        {
+            "id": "install-task",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "install"
+            }
+        }
+    ]
+}
